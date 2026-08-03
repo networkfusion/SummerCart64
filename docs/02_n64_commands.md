@@ -22,7 +22,7 @@
 | `I` | **SD_SECTOR_SET**     | sector        | ---          | ---              | ---            | Set starting sector for next SD card R/W operation           |
 | `s` | **SD_READ**           | pi_address    | sector_count | ---              | ---            | Read sectors from the SD card to flashcart memory space      |
 | `S` | **SD_WRITE**          | pi_address    | sector_count | ---              | ---            | Write sectors from the flashcart memory space to the SD card |
-| `D` | **DISK_MAPPING_SET**  | pi_address    | table_size   | ---              | ---            | Set 64DD disk mapping for SD mode                            |
+| `D` | **DISK_MAPPING_SET**  | pi_address    | table_size   | ---              | ---            | Set 64DD disk mapping for SD mode (slot 0 = primary, slots 1-4 = swap) |
 | `w` | **WRITEBACK_PENDING** | ---           | ---          | pending_status   | ---            | Get save writeback status (is write queued to the SD card)   |
 | `W` | **WRITEBACK_SD_INFO** | pi_address    | ---          | ---              | ---            | Load writeback SD sector table and enable it                 |
 | `K` | **FLASH_PROGRAM**     | pi_address    | length       | ---              | ---            | Program flash with bytes loaded into data buffer             |

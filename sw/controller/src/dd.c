@@ -13,7 +13,7 @@
 #define DD_BLOCK_BUFFER_ADDRESS     (0x03BC0000UL - DD_BLOCK_BUFFER_SIZE)
 #define DD_SECTOR_BUFFER_ADDRESS    (0x05002800UL)
 #define DD_SD_SECTOR_TABLE_SIZE     (DD_BLOCK_BUFFER_SIZE / SD_SECTOR_SIZE)
-#define DD_SD_MAX_DISKS             (4)
+#define DD_SD_MAX_DISKS             (5)
 
 #define DD_DRIVE_ID_RETAIL          (0x0003)
 #define DD_DRIVE_ID_DEVELOPMENT     (0x0004)
@@ -87,6 +87,7 @@ struct process {
     dd_drive_type_t drive_type;
     bool sd_mode;
     uint8_t sd_current_disk;
+    uint8_t sd_next_swap_disk;  // next swap slot to use when ejecting from primary
     sd_disk_info_t sd_disk_info[DD_SD_MAX_DISKS];
 };
 
@@ -259,6 +260,7 @@ void dd_set_disk_mapping (uint32_t address, uint32_t length) {
     sd_disk_info_t info;
     length /= sizeof(info);
     p.sd_current_disk = 0;
+    p.sd_next_swap_disk = 1;
     for (int i = 0; i < DD_SD_MAX_DISKS; i++) {
         if (i < length) {
             fpga_mem_read(address, sizeof(info), (uint8_t *) (&info));
@@ -278,11 +280,17 @@ void dd_handle_button (void) {
         dd_set_disk_state(DD_DISK_STATE_INSERTED);
     } else {
         dd_set_disk_state(DD_DISK_STATE_EJECTED);
-        for (uint8_t i = 0; i < DD_SD_MAX_DISKS; i++) {
-            uint8_t sd_next_disk = ((p.sd_current_disk + i + 1) % DD_SD_MAX_DISKS);
-            if (p.sd_disk_info[sd_next_disk].thb_table_address != 0xFFFFFFFF) {
-                p.sd_current_disk = sd_next_disk;
-                break;
+        if (p.sd_current_disk != 0) {
+            p.sd_current_disk = 0;  // always return to primary (slot 0) after a swap disk
+        } else {
+            // advance to next non-empty swap slot (slots 1..DD_SD_MAX_DISKS-1)
+            for (uint8_t i = 0; i < DD_SD_MAX_DISKS - 1; i++) {
+                uint8_t candidate = ((p.sd_next_swap_disk - 1 + i) % (DD_SD_MAX_DISKS - 1)) + 1;
+                if (p.sd_disk_info[candidate].thb_table_address != 0xFFFFFFFF) {
+                    p.sd_current_disk = candidate;
+                    p.sd_next_swap_disk = (candidate % (DD_SD_MAX_DISKS - 1)) + 1;
+                    break;
+                }
             }
         }
     }
@@ -300,6 +308,7 @@ void dd_init (void) {
     p.drive_type = DD_DRIVE_TYPE_RETAIL;
     p.sd_mode = false;
     p.sd_current_disk = 0;
+    p.sd_next_swap_disk = 1;
     dd_set_disk_mapping(0, 0);
 }
 
