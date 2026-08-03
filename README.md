@@ -50,6 +50,8 @@
 - [Config options](./docs/04_config_options.md)
 - [FW and SW info](./docs/05_fw_and_sw_info.md)
 - [Build guide](./docs/06_build_guide.md)
+- [Firmware build requirements](./docs/08_firmware_build_requirements.md)
+- [AI agent guide](./docs/07_ai_agent_guide.md)
 
 ---
 
