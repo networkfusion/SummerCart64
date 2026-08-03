@@ -1,3 +1,7 @@
+# Shell scripts and Makefiles must have LF to run inside Linux/Docker containers
+*.sh text eol=lf
+Makefile text eol=lf
+
 fw/project/lcmxo2/*.sty linguist-generated
 fw/rtl/serv/* linguist-vendored
 fw/rtl/vendor/** -linguist-vendored
