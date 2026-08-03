@@ -277,13 +277,10 @@ void dd_set_disk_mapping (uint32_t address, uint32_t length) {
 void dd_handle_button (void) {
     led_activity_pulse();
     if (dd_get_disk_state() == DD_DISK_STATE_EJECTED) {
-        dd_set_disk_state(DD_DISK_STATE_INSERTED);
-    } else {
-        dd_set_disk_state(DD_DISK_STATE_EJECTED);
+        // Advance disk slot then insert - handles both user-press and game-software-initiated eject
         if (p.sd_current_disk != 0) {
-            p.sd_current_disk = 0;  // always return to primary (slot 0) after a swap disk
+            p.sd_current_disk = 0;
         } else {
-            // advance to next non-empty swap slot (slots 1..DD_SD_MAX_DISKS-1)
             for (uint8_t i = 0; i < DD_SD_MAX_DISKS - 1; i++) {
                 uint8_t candidate = ((p.sd_next_swap_disk - 1 + i) % (DD_SD_MAX_DISKS - 1)) + 1;
                 if (p.sd_disk_info[candidate].thb_table_address != 0xFFFFFFFF) {
@@ -293,6 +290,9 @@ void dd_handle_button (void) {
                 }
             }
         }
+        dd_set_disk_state(DD_DISK_STATE_CHANGED);
+    } else {
+        dd_set_disk_state(DD_DISK_STATE_EJECTED);
     }
 }
 
