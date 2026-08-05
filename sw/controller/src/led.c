@@ -8,6 +8,7 @@
 #define LED_REFRESH_PERIOD_MS   (50)
 
 #define LED_PULSE_LENGTH_MS     (200)
+#define LED_BLINK_PULSE_MS      (100)  // shorter than normal pulse so rapid multi-tap is visually distinct
 
 #define ERROR_BLINK_PERIOD_MS   (100)
 #define ERROR_TOTAL_PERIOD_MS   (1000)
@@ -18,6 +19,10 @@
 
 static bool activity_pulse = false;
 static int activity_pulse_timer = 0;
+
+static uint8_t blink_remaining = 0;
+static int blink_timer = 0;
+static bool blink_phase_on = false;
 
 static bool cic_error = false;
 static bool rtc_error = false;
@@ -42,6 +47,13 @@ void led_activity_off (void) {
 void led_activity_pulse (void) {
     activity_pulse = true;
     activity_pulse_timer = LED_PULSE_LENGTH_MS;
+}
+
+void led_activity_blink (uint8_t count) {
+    blink_remaining = count;
+    blink_timer = LED_BLINK_PULSE_MS;
+    blink_phase_on = true;
+    activity_pulse = false;
 }
 
 
@@ -123,6 +135,29 @@ void led_process (void) {
             error_timer = 0;
         }
 
+        return;
+    }
+
+    if (blink_remaining > 0) {
+        if (blink_phase_on) {
+            hw_gpio_set(GPIO_ID_LED);
+        } else {
+            hw_gpio_reset(GPIO_ID_LED);
+        }
+        blink_timer -= LED_REFRESH_PERIOD_MS;
+        if (blink_timer <= 0) {
+            if (blink_phase_on) {
+                blink_phase_on = false;
+                blink_timer = LED_BLINK_PULSE_MS;
+            } else {
+                blink_remaining--;
+                blink_phase_on = (blink_remaining > 0);
+                blink_timer = LED_PULSE_LENGTH_MS;
+                if (blink_remaining == 0) {
+                    hw_gpio_reset(GPIO_ID_LED);
+                }
+            }
+        }
         return;
     }
 
